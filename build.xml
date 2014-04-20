@@ -1,14 +1,18 @@
-<project name="FitNesse-JBehave Test system" default="all" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+<project name="FitNesse-Cucumber Test system" default="all" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
 
     <description>
-        Execute JBehave tests from FitNesse.
+        Execute Cucumber tests from FitNesse.
     </description>
 
+    <property file="${user.home}/.sonatype.properties"/>
+    <property file="version.info"/>
     <property environment="env"/>
     <property name="src.dir" location="src"/>
     <property name="test.src.dir" location="test"/>
+    <property name="steps.src.dir" location="stepsrc"/>
     <property name="classes.dir" location="classes"/>
     <property name="test.classes.dir" location="test-classes"/>
+    <property name="steps.classes.dir" location="steps-classes"/>
     <property name="fitnesseRoot" value="FitNesseRoot"/>
     <property name="results.dir" location="test-results"/>
     <property name="dist.dir" location="dist"/>
@@ -21,7 +25,7 @@
   
     <target name="build" depends="clean, compile" description="clean, then compile the source"/>
 
-    <target name="run" depends="compile" description="Start FitNesse from the command line">
+    <target name="run" depends="test-compile, classpath-page" description="Start FitNesse from the command line">
         <java classpathref="classpath" classname="fitnesseMain.FitNesseMain" fork="true" failonerror="true">
             <arg value="-v" />
             <arg value="-p" />
@@ -29,28 +33,53 @@
         </java>
     </target>
 
+    <target name="classpath-page" depends="steps-compile" description="Create classpath file">
+        <pathconvert pathsep="${line.separator}" property="pageContent" refid="fitnesse.classpath">
+            <map from="" to="!path "/>
+        </pathconvert>
+        <mkdir dir="FitNesseRoot/CucumberClassPath" />
+        <echo file="FitNesseRoot/CucumberClassPath/content.txt">Generated classpath for Cucumber tests:${line.separator}${line.separator}${pageContent}</echo>
+    </target>
+
+    <target name="retrieve" depends="resolve" description="Copy dependencies to lib/, mainly for Acceptance tests and IDE's">
+        <ivy:retrieve pattern="${lib.dir}/[artifact].[ext]" type="jar" conf="default,test" />
+    </target>
+
+    <target name="dependencies" depends="resolve" description="Generate a dependencies graph">
+        <ivy:report conf="*" todir="dependencies" />
+    </target>
+
     <!--
       Bundling
       -->
     <target name="jar" depends="compile" description="generate the jar file">
         <mkdir dir="${dist.dir}" />
-        <delete file="${dist.dir}/fitnesse-jbehave.jar" />
+        <delete file="${dist.dir}/fitnesse-cucumber.jar" />
 
-        <jar jarfile="${dist.dir}/fitnesse-jbehave.jar" basedir="${classes.dir}">
+        <jar jarfile="${dist.dir}/fitnesse-cucumber.jar" basedir="${classes.dir}">
             <include name="**" />
+            <service type="fitnesse.plugins.PluginFeatureFactory"
+                     provider="org.fitnesse.cucumber.Plugin"/>
         </jar>
     </target>
 
     <target name="standalone-jar" depends="jar" description="generate the standalone jar file">
         <ivy:cachefileset setid="standalone.jar.fileset" conf="standalone" />
-        <jar jarfile="${dist.dir}/fitnesse-jbehave-standalone.jar">
-            <zipfileset src="${dist.dir}/fitnesse-jbehave.jar" />
+        <!-- Create a temporary file, so we can remove all META-INF stuff when packaging the real thing -->
+        <zip destfile="${dist.dir}/.standalone-jar-dependencies.tmp">
             <zipgroupfileset refid="standalone.jar.fileset" />
+        </zip>
+        <jar destfile="${dist.dir}/fitnesse-cucumber-standalone.jar">
+            <zipfileset src="${dist.dir}/fitnesse-cucumber.jar" />
+            <zipfileset src="${dist.dir}/.standalone-jar-dependencies.tmp" excludes="META-INF/**" />
         </jar>
+        <delete file="${dist.dir}/.standalone-jar-dependencies.tmp" />
     </target>
 
+
+
     <target name="sources-jar">
-        <jar jarfile="${dist.dir}/fitnesse--jbehave-sources.jar" basedir="src">
+        <jar jarfile="${dist.dir}/fitnesse-cucumber-sources.jar" basedir="src">
             <include name="**" />
         </jar>
     </target>
@@ -58,7 +87,7 @@
     <target name="javadoc-jar" depends="compile">
         <mkdir dir="${javadoc.dir}" />
         <javadoc sourcepath="${src.dir}" destdir="${javadoc.dir}" classpathref="classpath" />
-        <jar jarfile="${dist.dir}/fitnesse--jbehave-javadoc.jar" basedir="${javadoc.dir}" />
+        <jar jarfile="${dist.dir}/fitnesse-cucumber-javadoc.jar" basedir="${javadoc.dir}" />
 
     </target>
 
@@ -67,14 +96,20 @@
         <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" debug="true" source="1.7" target="1.7" includeantruntime="false" />
     </target>
 
-    <target name="test-compile" depends="compile" description="compile the source (make)">
+    <target name="steps-compile" depends="compile" description="compile the source (make)">
+        <mkdir dir="${steps.classes.dir}" />
+        <javac srcdir="${steps.src.dir}" destdir="${steps.classes.dir}" classpathref="classpath" debug="true" source="1.7" target="1.7" includeantruntime="false" />
+    </target>
+
+    <target name="test-compile" depends="compile,steps-compile" description="compile the source (make)">
         <mkdir dir="${test.classes.dir}" />
-        <javac srcdir="${test.src.dir}" destdir="${test.classes.dir}" classpathref="classpath" debug="true" source="1.7" target="1.7" includeantruntime="false" />
+        <javac srcdir="${test.src.dir}" destdir="${test.classes.dir}" classpathref="test.classpath" debug="true" source="1.7" target="1.7" includeantruntime="false" />
     </target>
 
     <target name="clean" description="delete everything in the classes directory">
         <delete dir="${classes.dir}" />
         <delete dir="${test.classes.dir}" />
+        <delete dir="${steps.classes.dir}" />
         <delete dir="${results.dir}" />
         <delete dir="${dist.dir}" />
         <delete dir="${javadoc.dir}" />
@@ -83,7 +118,7 @@
     <target name="test" depends="test-compile" description="run the unit tests">
         <mkdir dir="${results.dir}" />
         <junit forkmode="once" fork="yes" printsummary="no" haltonfailure="yes" haltonerror="yes" dir="${basedir}">
-            <classpath refid="classpath" />
+            <classpath refid="test.classpath" />
             <formatter type="xml" usefile="true" />
             <formatter type="plain" usefile="false" />
             <batchtest todir="${results.dir}">
@@ -98,42 +133,68 @@
 
     <target name="resolve" depends="ivy-init">
         <ivy:resolve />
-        <ivy:cachepath pathid="lib.classpath" />
+        <ivy:cachepath pathid="default.lib.classpath" conf="default"/>
+        <ivy:cachepath pathid="test.lib.classpath" conf="default,test" />
         <path id="classpath">
             <pathelement path="${classes.dir}" />
+            <path refid="default.lib.classpath" />
+        </path>
+        <path id="test.classpath">
+            <pathelement path="${classes.dir}" />
+            <pathelement path="${steps.classes.dir}" />
             <pathelement path="${test.classes.dir}" />
-            <path refid="lib.classpath" />
+            <path refid="test.lib.classpath" />
+        </path>
+        <path id="fitnesse.classpath">
+            <pathelement path="${steps.classes.dir}" />
+            <path refid="default.lib.classpath" />
         </path>
     </target>
 
     <target name="pom" depends="resolve">
         <ivy:deliver deliverpattern="${dist.dir}/ivy.xml" pubrevision="${version}" status="release" />
-        <ivy:makepom ivyfile="${dist.dir}/ivy.xml" templatefile="extra/maven/pom.xml.template" pomfile="${dist.dir}/fitnesse.pom" conf="standalone,default,test">
+        <ivy:makepom ivyfile="${dist.dir}/ivy.xml" templatefile="pom.xml.template" pomfile="${dist.dir}/fitnesse-cucumber.pom" conf="standalone,default,test">
                <mapping conf="standalone" scope="compile" />
                <mapping conf="test" scope="test" />
         </ivy:makepom>
     </target>
 
-    <target name="snapshot" depends="resolve,pom">
+    <target name="snapshot-pom" depends="resolve">
+        <ivy:deliver deliverpattern="${dist.dir}/ivy.xml" pubrevision="${version}-SNAPSHOT" status="release" />
+        <ivy:makepom ivyfile="${dist.dir}/ivy.xml" templatefile="pom.xml.template" pomfile="${dist.dir}/fitnesse-cucumber.pom" conf="standalone,default,test">
+            <mapping conf="standalone" scope="compile" />
+            <mapping conf="test" scope="test" />
+        </ivy:makepom>
+    </target>
+
+    <target name="snapshot" depends="snapshot-pom,jar,sources-jar,javadoc-jar" description="Publish a snapshot to oss.sonatype.org">
+        <fail unless="upload.user" message="supply upload.user on the command line"/>
+        <fail unless="upload.password" message="supply upload.password on the command line"/>
+        <fail unless="pgp.password" message="supply pgp.password on the command line"/>
+        <ivy:settings id="ivy.publish.instance"
+            file="ivysettings-sonatype.xml" />
         <ivy:publish resolver="sonatype-nexus-snapshots"
-            pubrevision="${version}"
-            publishivy="false">
-            <artifacts pattern="${dist.dir}/[artifact](-[classifier]).[ext]" />
+            settingsref="ivy.publish.instance"
+            pubrevision="${version}-SNAPSHOT"
+            publishivy="false"
+            overwrite="true" conf="default">
+            <ivy:artifacts pattern="${dist.dir}/[artifact](-[classifier]).[ext]" />
         </ivy:publish>
     </target>
 
-    <target name="publish" depends="jar,pom,standalone-jar,sources-jar,javadoc-jar">
+
+    <target name="publish" depends="pom,jar,standalone-jar,sources-jar,javadoc-jar" description="Publish a release to oss.sonatype.org">
         <fail unless="upload.user" message="supply upload.user on the command line"/>
         <fail unless="upload.password" message="supply upload.password on the command line"/>
         <fail unless="pgp.password" message="supply pgp.password on the command line"/>
         <ivy:settings id="ivy.publish.instance"
             file="ivysettings-sonatype.xml" />
         <ivy:publish resolver="sonatype-nexus-staging"
+            settingsref="ivy.publish.instance"
             pubrevision="${version}"
             publishivy="false"
-            settingsref="ivy.publish.instance"
-            overwrite="true">
-            <artifacts pattern="${dist.dir}/[artifact](-[classifier]).[ext]" />
+            overwrite="true" conf="default">
+            <ivy:artifacts pattern="${dist.dir}/[artifact](-[classifier]).[ext]" />
         </ivy:publish>
     </target>
 

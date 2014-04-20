@@ -1,28 +1,31 @@
-<ivy-module version="2.0">
-	<info organisation="org.fitnesse.testsystems" module="fitnesse-jbehave">
+<ivy-module version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+
+	<info organisation="org.fitnesse.cucumber" module="fitnesse-cucumber">
 		<license name="Common Public License version 1.0"
 			url="http://www.opensource.org/licenses/cpl1.0" />
-		<description homepage="http://github.com/amolenaar/fitnesse-jbehave-test-system">
-			A test execiter for JBehave test scripts.
+		<description homepage="http://github.com/amolenaar/fitnesse-cucumber-test-system">
+			A test executor for JBehave test scripts.
 		</description>
 	</info>
-	<configurations>
+
+    <configurations>
 		<conf name="default" visibility="public" />
-		<conf name="standalone" visibility="public" description="include in fitnesse-jbehave-standalone build" />
+		<conf name="standalone" visibility="public" description="include in fitnesse-cucumber-standalone build" />
 		<conf name="test" visibility="public" extends="default" />
 	</configurations>
-        <!-- for publication to maven repos -->
-	<publications xmlns:e="urn:ant.apache.org:ivy-extras">
-		<artifact name="fitnesse-jbehave" type="jar" ext="jar" />
-		<artifact name="fitnesse-jbehave" type="pom" ext="pom" />
-		<artifact name="fitnesse-jbehave" type="source" ext="jar" e:classifier="sources" />
-		<artifact name="fitnesse-jbehave" type="javadoc" ext="jar" e:classifier="javadoc" />
-		<artifact name="fitnesse-jbehave" type="jar" ext="jar" e:classifier="standalone" />
+
+    <publications xmlns:e="urn:ant.apache.org:ivy-extras">
+		<artifact name="fitnesse-cucumber" type="jar" ext="jar" />
+		<artifact name="fitnesse-cucumber" type="pom" ext="pom" />
+		<artifact name="fitnesse-cucumber" type="source" ext="jar" e:classifier="sources" />
+		<artifact name="fitnesse-cucumber" type="javadoc" ext="jar" e:classifier="javadoc" />
+		<artifact name="fitnesse-cucumber" type="jar" ext="jar" e:classifier="standalone" />
 	</publications>
  
 	<dependencies>
-		<dependency org="org.fitnesse" name="fitnesse" rev="20140201" conf="standalone->default,default" />
-		<dependency org="org.jbehave" name="jbehave-core" rev="4.0-beta-5" conf="standalone->default,default" />
+		<dependency org="org.fitnesse" name="fitnesse" rev="20151230" conf="*->default" />
+		<dependency org="info.cukes" name="cucumber-java" rev="1.2.2" conf="*->default" />
 
 		<!-- scope: test -->
 		<dependency org="org.mockito" name="mockito-core" rev="1.9.5" conf="test->default" />

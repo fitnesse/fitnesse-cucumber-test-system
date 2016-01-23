@@ -1,12 +1,22 @@
 package org.fitnesse.cucumber;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
+import cucumber.runtime.*;
+import cucumber.runtime.Runtime;
+import cucumber.runtime.io.MultiLoader;
+import cucumber.runtime.io.Resource;
+import cucumber.runtime.io.ResourceLoader;
+import cucumber.runtime.io.ResourceLoaderClassFinder;
+import cucumber.runtime.model.CucumberFeature;
+import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.*;
+import fitnesse.wiki.WikiPage;
+import fitnesse.wiki.fs.FileSystemPage;
+import gherkin.formatter.*;
+import gherkin.formatter.Formatter;
+import gherkin.formatter.model.*;
 
 import static fitnesse.html.HtmlUtil.escapeHTML;
 import static java.lang.String.format;
@@ -17,15 +27,17 @@ import static java.lang.String.format;
 public class CucumberTestSystem implements TestSystem {
 
     private final String name;
+    private final ExecutionLogListener executionLogListener;
     private final ClassLoader classLoader;
     private final CompositeTestSystemListener testSystemListener;
 
     private boolean started = false;
-    private TestSummary testSummary;
+//    private TestSummary testSummary;
 
-    public CucumberTestSystem(String name, ClassLoader classLoader) {
+    public CucumberTestSystem(String name, final ExecutionLogListener executionLogListener, ClassLoader classLoader) {
         super();
         this.name = name;
+        this.executionLogListener = executionLogListener;
         this.classLoader = classLoader;
         this.testSystemListener = new CompositeTestSystemListener();
     }
@@ -58,21 +70,47 @@ public class CucumberTestSystem implements TestSystem {
     }
 
     @Override
-    public void runTests(TestPage pageToTest) throws IOException, InterruptedException {
+    public void runTests(TestPage testPage) throws IOException, InterruptedException {
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
-        testSummary = new TestSummary();
+        String gluePath = testPage.getVariable("cucumber.glue");
+        final FitNesseFormatter formatter = new FitNesseFormatter();
 
-        testSystemListener.testStarted(pageToTest);
+        testSystemListener.testStarted(testPage);
 
         try {
             Thread.currentThread().setContextClassLoader(classLoader);
 
-            // TODO: run page content
-            pageToTest.getContent();
+            RuntimeOptions runtimeOptions = new RuntimeOptions(Arrays.asList("--glue", gluePath));
+
+            final List<CucumberFeature> cucumberFeatures = new ArrayList<>();
+            final List<Object> filters = new ArrayList<>();
+            final FeatureBuilder builder = new FeatureBuilder(cucumberFeatures);
+
+            builder.parse(new PageResource(testPage), filters);
+            ResourceLoader resourceLoader = new MultiLoader(classLoader);
+            ClassFinder classFinder = new ResourceLoaderClassFinder(resourceLoader, classLoader);
+            Runtime runtime = new Runtime(resourceLoader, classFinder, classLoader, runtimeOptions);
+
+            for (CucumberFeature cucumberFeature : cucumberFeatures) {
+                cucumberFeature.run(formatter, formatter, runtime);
+            }
+        } catch (CucumberException e) {
+            formatter.testSummary.add(ExecutionResult.ERROR);
+            testSystemListener.testOutputChunk("<span class='error'>Test execution failed: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()) + "</span>");
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
-            testSystemListener.testComplete(pageToTest, testSummary);
+            testSystemListener.testComplete(testPage, formatter.testSummary);
         }
+    }
+
+    public String getPath(TestPage testPage) {
+        WikiPage sourcePage = ((WikiTestPage) testPage).getSourcePage();
+        if (sourcePage instanceof FileSystemPage) {
+            return ((FileSystemPage) sourcePage).getFileSystemPath().getPath();
+        } else if (sourcePage instanceof CucumberFeaturePage) {
+            return ((CucumberFeaturePage) sourcePage).getFileSystemPath().getPath();
+        }
+        throw new RuntimeException("Can not parse file as Cucumber feature file: " + sourcePage);
     }
 
     @Override
@@ -85,34 +123,170 @@ public class CucumberTestSystem implements TestSystem {
         testSystemListener.addTestSystemListener(listener);
     }
 
-    private Collection<Object> resolveClassInstances(Collection<String> stepNames) {
-        List<Object> steps = new LinkedList<>();
-        for (String stepName : stepNames) {
-            try {
-                steps.add(classLoader.loadClass(stepName).newInstance());
-            } catch (Exception e) {
-                processStep(format("Unable to load steps from %s: %s", stepName, e.toString()), ExecutionResult.ERROR);
+
+    private static class PageResource implements Resource {
+        private final TestPage testPage;
+
+        public PageResource(final TestPage testPage) {
+            this.testPage = testPage;
+        }
+
+        @Override
+        public String getPath() {
+            return "fitnesse";
+        }
+
+        @Override
+        public String getAbsolutePath() {
+            return "fitnesse";
+        }
+
+        @Override
+        public InputStream getInputStream() throws IOException {
+            return new ByteArrayInputStream(testPage.getContent().getBytes());
+        }
+
+        @Override
+        public String getClassName(final String extension) {
+            return "fitnesse";
+        }
+    }
+
+
+    private class FitNesseFormatter implements Formatter, Reporter {
+
+        private Queue<Step> currentSteps = new ArrayDeque<>();
+
+        private TestSummary testSummary = new TestSummary();
+        private boolean inScenarioOutline;
+
+        @Override
+        public void uri(final String uri) {
+        }
+
+        @Override
+        public void background(final Background background) {
+            write("background " + background + "<br/>");
+        }
+
+        @Override
+        public void syntaxError(final String state, final String event, final List<String> legalEvents, final String uri, final Integer line) {
+            write("syntaxError " + state + " " + event + "<br/>");
+        }
+
+        @Override
+        public void feature(final Feature feature) {
+            write("<h3>Feature: " + feature.getName() + "</h3>");
+            if (feature.getDescription() != null) {
+                write("<p style='white-space: pre-line'>" + feature.getDescription() + "</p>");
             }
         }
-        return steps;
-    }
 
-
-    private void println(String message) {
-        output(format("%s<br/>", message));
-    }
-
-    private void output(String message) {
-        try {
-            testSystemListener.testOutputChunk(message);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to send ", e);
+        @Override
+        public void scenarioOutline(final ScenarioOutline scenarioOutline) {
+//            write("<h4>  scenario outline: " + scenarioOutline.getName() + "</h4>");
+//            inScenarioOutline = true;
         }
-    }
 
-    private void processStep(String message, ExecutionResult result) {
-        testSummary.add(result);
-        output(format("<span class='%s'>%s</span><br/>", result.name().toLowerCase(), escapeHTML(message)));
-    }
+        @Override
+        public void scenario(final Scenario scenario) {
+            write("<h4>  scenario: " + scenario.getName() + "</h4>");
+            if (scenario.getDescription() != null) {
+                write("<p style='white-space: pre-line'>" + scenario.getDescription() + "</p>");
+            }
+        }
 
+        @Override
+        public void examples(final Examples examples) {
+        }
+
+        @Override
+        public void startOfScenarioLifeCycle(final Scenario scenario) {
+        }
+
+        @Override
+        public void step(final Step step) {
+            currentSteps.add(step);
+        }
+
+        @Override
+        public void endOfScenarioLifeCycle(final Scenario scenario) {
+            currentSteps.clear();
+        }
+
+        @Override
+        public void done() {
+        }
+
+        @Override
+        public void close() {
+        }
+
+        @Override
+        public void eof() {
+        }
+
+        @Override
+        public void before(final Match match, final Result result) {
+            if (result.getError() != null) {
+                write("<span class='error'>Error before scenario: " + result.getError().getMessage() + "; see Execution Log for details</span>");
+                executionLogListener.stdErr(result.getErrorMessage());
+            }
+        }
+
+        @Override
+        public void result(final Result result) {
+            Step currentStep = currentSteps.poll();
+            String status = result.getStatus();
+            if (Result.PASSED.equals(status)) {
+                processStep(currentStep, ExecutionResult.PASS);
+            } else if (Result.FAILED.equals(status)) {
+                processStep(currentStep, ExecutionResult.FAIL);
+            } else if (Result.SKIPPED.getStatus().equals(status)) {
+                processStep(currentStep, ExecutionResult.IGNORE);
+            } else if (Result.UNDEFINED.getStatus().equals(status)) {
+                processUndefinedStep(currentStep);
+            } else {
+                processStep(currentStep, ExecutionResult.ERROR);
+            }
+        }
+
+        @Override
+        public void after(final Match match, final Result result) {
+            if (result.getError() != null) {
+                write("<span class='error'>Error after scenario: " + result.getError().getMessage() + "; see Execution Log for details</span>");
+                executionLogListener.stdErr(result.getErrorMessage());
+            }
+        }
+
+        @Override
+        public void match(final Match match) {
+            System.out.println("Match: " + match.getLocation());
+        }
+
+        @Override
+        public void embedding(final String mimeType, final byte[] data) {
+            write("** embedding " + mimeType + " ** ");
+        }
+
+        @Override
+        public void write(final String text) {
+            try {
+                testSystemListener.testOutputChunk(text);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to send output", e);
+            }
+        }
+
+        private void processStep(Step step, ExecutionResult result) {
+            testSummary.add(result);
+            write(format("<span class='%s'>%s%s</span><br/>", result.name().toLowerCase(), step.getKeyword(), escapeHTML(step.getName())));
+        }
+
+        private void processUndefinedStep(final Step step) {
+            testSummary.add(ExecutionResult.ERROR);
+            write(format("<span class='error'>Undefined step: %s%s</span><br/>", step.getKeyword(), escapeHTML(step.getName())));
+        }
+
+    }
 }

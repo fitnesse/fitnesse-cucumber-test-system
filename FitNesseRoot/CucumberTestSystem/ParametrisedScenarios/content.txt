@@ -1,12 +1,14 @@
-Scenario: squared numbers (last one fails)
+Feature: squared numbers
 
-Given a variable x with value <value>
-When I multiply x by <value>
-Then x should equal <outcome>
+Scenario outline: squared numbers (last one fails)
+
+  Given a variable x with value <value>
+  When I multiply x by <value>
+  Then x should equal <outcome>
 
 Examples:
-| value | outcome |
-| 2 | 4 |
-| 3 | 9 |
-| 4 | 10 |
+  | value | outcome |
+  | 2 | 4 |
+  | 3 | 9 |
+  | 4 | 10 |
 

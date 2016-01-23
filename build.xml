@@ -137,6 +137,7 @@
         <ivy:cachepath pathid="test.lib.classpath" conf="default,test" />
         <path id="classpath">
             <pathelement path="${classes.dir}" />
+            <pathelement path="${steps.classes.dir}" />
             <path refid="default.lib.classpath" />
         </path>
         <path id="test.classpath">

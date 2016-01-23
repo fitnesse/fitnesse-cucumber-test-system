@@ -1,7 +1,7 @@
 !1 Welcome to [[FitNesse][FitNesse.FitNesse]]!
 !3 ''The fully integrated stand-alone acceptance testing framework and wiki.''
 
-Go to: JbehaveTestSystem.
+Go to: CucumberTestSystem.
 
 | '''To Learn More...''' |
 | [[A One-Minute Description][.FitNesse.UserGuide.OneMinuteDescription]] | ''What is FitNesse Start here.'' |

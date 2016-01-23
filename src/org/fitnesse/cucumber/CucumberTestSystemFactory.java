@@ -17,7 +17,7 @@ public class CucumberTestSystemFactory implements TestSystemFactory {
     @Override
     public TestSystem create(Descriptor descriptor) throws IOException {
         URLClassLoader classLoader = new URLClassLoader(getUrlsFromClassPath(descriptor), getClass().getClassLoader());
-        return new CucumberTestSystem(descriptor.getTestSystem(), classLoader);
+        return new CucumberTestSystem(descriptor.getTestSystem(), descriptor.getExecutionLogListener(), classLoader);
     }
 
     private URL[] getUrlsFromClassPath(Descriptor descriptor) throws MalformedURLException {

@@ -137,4 +137,7 @@ public class CucumberFeaturePage extends BaseWikiPage {
         return new HtmlTranslator(null, parsingPage).translate(parser.parseWithParent(variable.getValue(), null));
     }
 
+    public File getFileSystemPath() {
+        return path;
+    }
 }

@@ -32,7 +32,7 @@ public class CucumberTestSystem implements TestSystem {
     private final CompositeTestSystemListener testSystemListener;
 
     private boolean started = false;
-//    private TestSummary testSummary;
+    private TestSummary testSummary;
 
     public CucumberTestSystem(String name, final ExecutionLogListener executionLogListener, ClassLoader classLoader) {
         super();
@@ -73,7 +73,8 @@ public class CucumberTestSystem implements TestSystem {
     public void runTests(TestPage testPage) throws IOException, InterruptedException {
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         String gluePath = testPage.getVariable("cucumber.glue");
-        final FitNesseFormatter formatter = new FitNesseFormatter();
+        final TestSummary testSummary = new TestSummary();
+        final FitNesseFormatter formatter = new FitNesseFormatter(testSummary);
 
         testSystemListener.testStarted(testPage);
 
@@ -161,8 +162,17 @@ public class CucumberTestSystem implements TestSystem {
         private Queue<ExamplesTableRow> examples = new ArrayDeque<>();
         private List<String> exampleHeaders;
 
-        private TestSummary testSummary = new TestSummary();
+        private final TestSummary testSummary;
         private String examplesKeyword;
+
+
+        public FitNesseFormatter() {
+            this(null);
+        }
+
+        public FitNesseFormatter(final TestSummary testSummary) {
+            this.testSummary = testSummary;
+        }
 
         @Override
         public void uri(final String uri) {
@@ -170,7 +180,7 @@ public class CucumberTestSystem implements TestSystem {
 
         @Override
         public void background(final Background background) {
-            write("background " + background + "<br/>");
+            write("h4", background);
         }
 
         @Override
@@ -294,12 +304,12 @@ public class CucumberTestSystem implements TestSystem {
         }
 
         private void processStep(Step step, ExecutionResult result) {
-            testSummary.add(result);
+            if (testSummary != null) testSummary.add(result);
             write(format("<span class='%s'>%s%s</span><br/>", result.name().toLowerCase(), step.getKeyword(), escapeHTML(step.getName())));
         }
 
         private void processUndefinedStep(final Step step) {
-            testSummary.add(ExecutionResult.ERROR);
+            if (testSummary != null) testSummary.add(ExecutionResult.ERROR);
             write(format("<span class='error'>Undefined step: %s%s</span><br/>", step.getKeyword(), escapeHTML(step.getName())));
         }
 

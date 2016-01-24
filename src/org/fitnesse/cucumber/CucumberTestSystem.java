@@ -94,6 +94,8 @@ public class CucumberTestSystem implements TestSystem {
             for (CucumberFeature cucumberFeature : cucumberFeatures) {
                 cucumberFeature.run(formatter, formatter, runtime);
             }
+
+            System.out.println(runtime.getSnippets());
         } catch (CucumberException e) {
             formatter.testSummary.add(ExecutionResult.ERROR);
             testSystemListener.testOutputChunk("<span class='error'>Test execution failed: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()) + "</span>");
@@ -156,9 +158,11 @@ public class CucumberTestSystem implements TestSystem {
     private class FitNesseFormatter implements Formatter, Reporter {
 
         private Queue<Step> currentSteps = new ArrayDeque<>();
+        private Queue<ExamplesTableRow> examples = new ArrayDeque<>();
+        private List<String> exampleHeaders;
 
         private TestSummary testSummary = new TestSummary();
-        private boolean inScenarioOutline;
+        private String examplesKeyword;
 
         @Override
         public void uri(final String uri) {
@@ -176,32 +180,46 @@ public class CucumberTestSystem implements TestSystem {
 
         @Override
         public void feature(final Feature feature) {
-            write("<h3>Feature: " + feature.getName() + "</h3>");
-            if (feature.getDescription() != null) {
-                write("<p style='white-space: pre-line'>" + feature.getDescription() + "</p>");
-            }
+            write("h3", feature);
         }
 
         @Override
         public void scenarioOutline(final ScenarioOutline scenarioOutline) {
-//            write("<h4>  scenario outline: " + scenarioOutline.getName() + "</h4>");
-//            inScenarioOutline = true;
+            write("h4", scenarioOutline);
         }
 
         @Override
         public void scenario(final Scenario scenario) {
-            write("<h4>  scenario: " + scenario.getName() + "</h4>");
-            if (scenario.getDescription() != null) {
-                write("<p style='white-space: pre-line'>" + scenario.getDescription() + "</p>");
+            if (examples.isEmpty()) {
+                write("h4", scenario);
+            } else {
+                final ExamplesTableRow values = examples.poll();
+                write("<h5>" + examplesKeyword + ": ");
+                for (int i = 0; i < exampleHeaders.size(); i++) {
+                    if (i > 0) write(", ");
+                    write(exampleHeaders.get(i) + " = " + values.getCells().get(i));
+                }
+                write("</h5>");
+            }
+        }
+
+        private void write(String tag, DescribedStatement statement) {
+            write("<" + tag + ">" + statement.getKeyword()+ ": " + statement.getName() + "</" + tag + ">");
+            if (statement.getDescription() != null) {
+                write("<p style='white-space: pre-line'>" + statement.getDescription() + "</p>");
             }
         }
 
         @Override
         public void examples(final Examples examples) {
+            examplesKeyword = examples.getKeyword();
+            this.examples.addAll(examples.getRows());
+            this.exampleHeaders = this.examples.poll().getCells();
         }
 
         @Override
         public void startOfScenarioLifeCycle(final Scenario scenario) {
+            currentSteps.clear();
         }
 
         @Override
@@ -211,7 +229,6 @@ public class CucumberTestSystem implements TestSystem {
 
         @Override
         public void endOfScenarioLifeCycle(final Scenario scenario) {
-            currentSteps.clear();
         }
 
         @Override
@@ -261,12 +278,10 @@ public class CucumberTestSystem implements TestSystem {
 
         @Override
         public void match(final Match match) {
-            System.out.println("Match: " + match.getLocation());
         }
 
         @Override
         public void embedding(final String mimeType, final byte[] data) {
-            write("** embedding " + mimeType + " ** ");
         }
 
         @Override

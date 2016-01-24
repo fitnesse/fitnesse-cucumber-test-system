@@ -82,7 +82,7 @@ public class CucumberTestSystemTest {
 
 
     @Test
-    public void canHandleAcenariooutLineWithExamples() throws IOException, InterruptedException {
+    public void canHandleScenarioOutLineWithExamples() throws IOException, InterruptedException {
         TestSystemListener listener = testWithPage("features/substory/scenarioOutline.feature");
         String output = concatOutput(listener);
         assertThat(output, containsString("foo"));

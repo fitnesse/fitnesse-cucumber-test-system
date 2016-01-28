@@ -85,7 +85,8 @@ public class CucumberTestSystemTest {
     public void canHandleScenarioOutLineWithExamples() throws IOException, InterruptedException {
         TestSystemListener listener = testWithPage("features/substory/scenarioOutline.feature");
         String output = concatOutput(listener);
-        assertThat(output, containsString("foo"));
+        assertThat(output, containsString("<h4>Scenario Outline: squared numbers (last one fails)</h4>"));
+        assertThat(output, containsString("<h5>Examples: value = 2, outcome = 4</h5>"));
     }
 
     // Perform test execution, assume no errors happen.

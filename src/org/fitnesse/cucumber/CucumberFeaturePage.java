@@ -1,28 +1,40 @@
 package org.fitnesse.cucumber;
 
-import fitnesse.wiki.*;
-import fitnesse.wikitext.parser.*;
-import org.apache.commons.lang.NotImplementedException;
-import util.FileUtil;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import org.apache.commons.lang.NotImplementedException;
+
+import fitnesse.wiki.*;
+import fitnesse.wikitext.parser.ParsingPage;
+import fitnesse.wikitext.parser.Symbol;
+import util.FileUtil;
 
 import static java.util.Collections.emptyList;
 
-public class CucumberFeaturePage extends BaseWikiPage {
+public class CucumberFeaturePage implements WikiPage {
     private final File path;
-    private final VariableSource variableSource;
+    private final String name;
+    private final WikiPage parent;
     private String content;
     private ParsingPage parsingPage;
     private Symbol syntaxTree;
 
-    public CucumberFeaturePage(File path, String name, WikiPage parent, VariableSource variableSource) {
-        super(name, parent);
-        this.variableSource = variableSource;
+    public CucumberFeaturePage(File path, String name, WikiPage parent) {
+        this.name = name;
+        this.parent = parent;
         this.path = path;
+    }
+
+    @Override
+    public WikiPage getParent() {
+        return parent == null ? this : parent;
+    }
+
+    @Override
+    public boolean isRoot() {
+        return parent == null || parent == this;
     }
 
     @Override
@@ -51,6 +63,11 @@ public class CucumberFeaturePage extends BaseWikiPage {
     }
 
     @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
     public PageData getData() {
         return new PageData(readContent(), wikiPageProperties());
     }
@@ -59,41 +76,6 @@ public class CucumberFeaturePage extends BaseWikiPage {
         WikiPageProperties properties = new WikiPageProperties();
         properties.set(PageType.TEST.toString());
         return properties;
-    }
-
-    private ParsingPage getParsingPage() {
-        parse();
-        return parsingPage;
-    }
-
-    private Symbol getSyntaxTree() {
-        parse();
-        return syntaxTree;
-    }
-
-    private void parse() {
-        if (syntaxTree == null) {
-            // This is the only page where we need a VariableSource
-            parsingPage = makeParsingPage();
-            syntaxTree = Parser.make(parsingPage, enrichWithWikiMarkup(getData().getContent())).parse();
-        }
-    }
-
-    public ParsingPage makeParsingPage() {
-        ParsingPage.Cache cache = new ParsingPage.Cache();
-
-        VariableSource compositeVariableSource = new CompositeVariableSource(
-                new ApplicationVariableSource(variableSource),
-                new PageVariableSource(this),
-                new BaseWikitextPage.UserVariableSource(variableSource),
-                cache,
-                new BaseWikitextPage.ParentPageVariableSource(this),
-                variableSource);
-        return new ParsingPage(new WikiSourcePage(this), compositeVariableSource, cache);
-    }
-
-    private String enrichWithWikiMarkup(String content) {
-        return content.replaceAll("(?im)^scenario:", "!3 Scenario:");
     }
 
     @Override
@@ -108,7 +90,20 @@ public class CucumberFeaturePage extends BaseWikiPage {
 
     @Override
     public String getHtml() {
-        return new HtmlTranslator(new WikiSourcePage(this), getParsingPage()).translateTree(getSyntaxTree());
+        final StringBuilder buffer = new StringBuilder();
+        new gherkin.parser.Parser(new FitNesseFormatter(null,
+                new Printer() {
+                    @Override
+                    public void write(final String text) {
+                        buffer.append(text);
+                    }
+                }, new Printer() {
+                    @Override
+                    public void write(final String text) {
+                        buffer.append(text);
+                    }
+                })).parse(readContent(), "", 0);
+        return buffer.toString();
     }
 
     private String readContent() {
@@ -128,16 +123,31 @@ public class CucumberFeaturePage extends BaseWikiPage {
     }
 
     @Override
-    public String getVariable(String name) {
-        ParsingPage parsingPage = getParsingPage();
-        Maybe<String> variable = parsingPage.findVariable(name);
-        if (variable.isNothing()) return null;
+    public PageCrawler getPageCrawler() {
+        return null;
+    }
 
-        Parser parser = Parser.make(parsingPage, "", SymbolProvider.variableDefinitionSymbolProvider);
-        return new HtmlTranslator(null, parsingPage).translate(parser.parseWithParent(variable.getValue(), null));
+    @Override
+    public String getVariable(String name) {
+        if ("TEST_SYSTEM".equals(name)) {
+            return "cucumber";
+        }
+        return null;
     }
 
     public File getFileSystemPath() {
         return path;
+    }
+
+    @Override
+    public int compareTo(final WikiPage other) {
+        try {
+            WikiPagePath path1 = getPageCrawler().getFullPath();
+            WikiPagePath path2 = other.getPageCrawler().getFullPath();
+            return path1.compareTo(path2);
+        }
+        catch (Exception e) {
+            return 0;
+        }
     }
 }

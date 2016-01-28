@@ -50,7 +50,7 @@ public class CucumberTocPage extends BaseWikitextPage {
             File childPath = new File(path, child);
             if (CucumberPageFactory.isFeatureFile(childPath)) {
                 children.add(new CucumberFeaturePage(childPath,
-                        child.split("\\.", 2)[0], this, getVariableSource()));
+                        child.split("\\.", 2)[0], this));
             } else if (childPath.isDirectory()) {
                 children.add(new CucumberTocPage(childPath,
                         childPath.getName(), this, getVariableSource()));

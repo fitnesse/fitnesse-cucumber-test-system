@@ -13,7 +13,7 @@ import gherkin.formatter.model.*;
 import static fitnesse.html.HtmlUtil.escapeHTML;
 import static java.lang.String.format;
 
-class FitNesseFormatter implements Formatter, Reporter {
+class FitNesseResultFormatter implements Formatter, Reporter {
 
     private final Printer outputPrinter;
     private final Printer errorPrinter;
@@ -26,7 +26,7 @@ class FitNesseFormatter implements Formatter, Reporter {
     private String examplesKeyword;
 
 
-    public FitNesseFormatter(final TestSummary testSummary, Printer outputPrinter, Printer errorPrinter) {
+    public FitNesseResultFormatter(final TestSummary testSummary, Printer outputPrinter, Printer errorPrinter) {
         this.outputPrinter = outputPrinter;
         this.errorPrinter = errorPrinter;
         this.testSummary = testSummary;
@@ -43,7 +43,7 @@ class FitNesseFormatter implements Formatter, Reporter {
 
     @Override
     public void syntaxError(final String state, final String event, final List<String> legalEvents, final String uri, final Integer line) {
-        write("syntaxError " + state + " " + event + "<br/>");
+        write("syntaxError " + escapeHTML(state) + " " + escapeHTML(event) + "<br/>");
     }
 
     @Override
@@ -62,10 +62,10 @@ class FitNesseFormatter implements Formatter, Reporter {
             write("h4", scenario);
         } else {
             final ExamplesTableRow values = examples.poll();
-            write("<h5>" + examplesKeyword + ": ");
+            write("<h5>" + escapeHTML(examplesKeyword) + ": ");
             for (int i = 0; i < exampleHeaders.size(); i++) {
                 if (i > 0) write(", ");
-                write(exampleHeaders.get(i) + " = " + values.getCells().get(i));
+                write(escapeHTML(exampleHeaders.get(i)) + " = " + escapeHTML(values.getCells().get(i)));
             }
             write("</h5>");
         }
@@ -74,7 +74,7 @@ class FitNesseFormatter implements Formatter, Reporter {
     private void write(String tag, DescribedStatement statement) {
         write("<" + tag + ">" + statement.getKeyword()+ ": " + statement.getName() + "</" + tag + ">");
         if (statement.getDescription() != null) {
-            write("<p style='white-space: pre-line'>" + statement.getDescription() + "</p>");
+            write("<p style='white-space: pre-line'>" + escapeHTML(statement.getDescription()) + "</p>");
         }
     }
 
@@ -112,14 +112,6 @@ class FitNesseFormatter implements Formatter, Reporter {
     }
 
     @Override
-    public void before(final Match match, final Result result) {
-        if (result.getError() != null) {
-            write("<span class='error'>Error before scenario: " + result.getError().getMessage() + "; see Execution Log for details</span>");
-            errorPrinter.write(result.getErrorMessage());
-        }
-    }
-
-    @Override
     public void result(final Result result) {
         Step currentStep = currentSteps.poll();
         String status = result.getStatus();
@@ -137,9 +129,19 @@ class FitNesseFormatter implements Formatter, Reporter {
     }
 
     @Override
+    public void before(final Match match, final Result result) {
+        if (result.getError() != null) {
+            testSummary.add(ExecutionResult.ERROR);
+            write("<span class='error'>Error before scenario: " + escapeHTML(result.getError().getMessage()) + ". See Execution Log for details.</span>");
+            errorPrinter.write(result.getErrorMessage());
+        }
+    }
+
+    @Override
     public void after(final Match match, final Result result) {
         if (result.getError() != null) {
-            write("<span class='error'>Error after scenario: " + result.getError().getMessage() + "; see Execution Log for details</span>");
+            testSummary.add(ExecutionResult.ERROR);
+            write("<span class='error'>Error after scenario: " + escapeHTML(result.getError().getMessage()) + ". See Execution Log for details.</span>");
             errorPrinter.write(result.getErrorMessage());
         }
     }
@@ -158,13 +160,13 @@ class FitNesseFormatter implements Formatter, Reporter {
     }
 
     private void processStep(Step step, ExecutionResult result) {
-        if (testSummary != null) testSummary.add(result);
-        write(format("<span class='%s'>%s%s</span><br/>", result.name().toLowerCase(), step.getKeyword(), escapeHTML(step.getName())));
+        testSummary.add(result);
+        write(format("<span class='%s'>%s%s</span><br/>", result.name().toLowerCase(), escapeHTML(step.getKeyword()), escapeHTML(step.getName())));
     }
 
     private void processUndefinedStep(final Step step) {
-        if (testSummary != null) testSummary.add(ExecutionResult.ERROR);
-        write(format("<span class='error'>Undefined step: %s%s</span><br/>", step.getKeyword(), escapeHTML(step.getName())));
+        testSummary.add(ExecutionResult.ERROR);
+        write(format("<span class='error'>Undefined step: %s%s</span><br/>", escapeHTML(step.getKeyword()), escapeHTML(step.getName())));
     }
 
 }

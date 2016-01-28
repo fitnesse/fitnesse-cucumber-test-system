@@ -71,7 +71,7 @@ public class CucumberTestSystem implements TestSystem {
         String gluePath = testPage.getVariable("cucumber.glue");
         final TestSummary testSummary = new TestSummary();
 
-        final FitNesseFormatter formatter = new FitNesseFormatter(testSummary,
+        final FitNesseResultFormatter formatter = new FitNesseResultFormatter(testSummary,
                 new Printer() {
                     @Override
                     public void write(final String text) {

@@ -70,14 +70,14 @@ public class CucumberTestSystemTest {
     public void canHandleFailingBeforeStep() throws IOException, InterruptedException {
         TestSystemListener listener = testWithPage("features/substory/withFailingBefore.feature");
         String output = concatOutput(listener);
-        assertThat(output, containsString("<span class='error'>Error before scenario: Something went wrong at runtime; see Execution Log for details</span>"));
+        assertThat(output, containsString("<span class='error'>Error before scenario: Something went wrong at runtime. See Execution Log for details.</span>"));
     }
 
     @Test
     public void canHandleFailingAfterStep() throws IOException, InterruptedException {
         TestSystemListener listener = testWithPage("features/substory/withFailingAfter.feature");
         String output = concatOutput(listener);
-        assertThat(output, containsString("<span class='error'>Error after scenario: Something went wrong at runtime; see Execution Log for details</span>"));
+        assertThat(output, containsString("<span class='error'>Error after scenario: Something went wrong at runtime. See Execution Log for details.</span>"));
     }
 
 

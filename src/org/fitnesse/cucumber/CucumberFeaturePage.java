@@ -9,6 +9,7 @@ import org.apache.commons.lang.NotImplementedException;
 import fitnesse.wiki.*;
 import fitnesse.wikitext.parser.ParsingPage;
 import fitnesse.wikitext.parser.Symbol;
+import gherkin.parser.ParseError;
 import util.FileUtil;
 
 import static java.util.Collections.emptyList;
@@ -91,18 +92,17 @@ public class CucumberFeaturePage implements WikiPage {
     @Override
     public String getHtml() {
         final StringBuilder buffer = new StringBuilder();
-        new gherkin.parser.Parser(new FitNesseFormatter(null,
-                new Printer() {
-                    @Override
-                    public void write(final String text) {
-                        buffer.append(text);
-                    }
-                }, new Printer() {
-                    @Override
-                    public void write(final String text) {
-                        buffer.append(text);
-                    }
-                })).parse(readContent(), "", 0);
+        try {
+            new gherkin.parser.Parser(new FitNessePageFormatter(new Printer() {
+                @Override
+                public void write(final String text) {
+                    buffer.append(text);
+                }
+            })).parse(readContent(), "", 0);
+        } catch (ParseError e) {
+            buffer.append("<span class=\"error\">Parse error in Cucumber page: " + e.getMessage() + "</span><br/><br/>");
+            buffer.append(readContent().replace("\n", "<br/>"));
+        }
         return buffer.toString();
     }
 
@@ -124,7 +124,7 @@ public class CucumberFeaturePage implements WikiPage {
 
     @Override
     public PageCrawler getPageCrawler() {
-        return null;
+        return new PageCrawlerImpl(this);
     }
 
     @Override

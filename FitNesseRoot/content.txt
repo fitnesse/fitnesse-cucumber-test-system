@@ -1,7 +1,5 @@
 !include -c .CucumberClassPath
 
-!define TEST_SYSTEM {cucumber}
-
 !**> Please note that the teststeps classes directory is not in FitNesse's own classpath:
 ${java.class.path}
 *!

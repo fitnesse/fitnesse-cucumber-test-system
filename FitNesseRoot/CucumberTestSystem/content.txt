@@ -1,11 +1,5 @@
 This page tells you how to use the Cucumber Test System for FitNesse.
 
-Summary:
-
- * Pages adhere to the Cucumber feature syntax (Gherkin)
- * Configure the Cucumber test system with FitNesse
- * Define variable ''cucumber.glue'' and let ot point to the class path where the step definitions can be found
-
 !contents
 
 !define TEST_SYSTEM {cucumber}

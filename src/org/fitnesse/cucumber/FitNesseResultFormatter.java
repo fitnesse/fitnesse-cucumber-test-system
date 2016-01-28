@@ -6,6 +6,7 @@ import java.util.Queue;
 
 import fitnesse.testsystems.ExecutionResult;
 import fitnesse.testsystems.TestSummary;
+import fitnesse.util.StringUtils;
 import gherkin.formatter.Formatter;
 import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
@@ -73,7 +74,7 @@ class FitNesseResultFormatter implements Formatter, Reporter {
 
     private void write(String tag, DescribedStatement statement) {
         write("<" + tag + ">" + statement.getKeyword()+ ": " + statement.getName() + "</" + tag + ">");
-        if (statement.getDescription() != null) {
+        if (!StringUtils.isBlank(statement.getDescription())) {
             write("<p style='white-space: pre-line'>" + escapeHTML(statement.getDescription()) + "</p>");
         }
     }
@@ -109,6 +110,7 @@ class FitNesseResultFormatter implements Formatter, Reporter {
 
     @Override
     public void eof() {
+        write("<br/><br/>");
     }
 
     @Override
@@ -141,7 +143,7 @@ class FitNesseResultFormatter implements Formatter, Reporter {
     public void after(final Match match, final Result result) {
         if (result.getError() != null) {
             testSummary.add(ExecutionResult.ERROR);
-            write("<span class='error'>Error after scenario: " + escapeHTML(result.getError().getMessage()) + ". See Execution Log for details.</span>");
+            write("<br/><span class='error'>Error after scenario: " + escapeHTML(result.getError().getMessage()) + ". See Execution Log for details.</span>");
             errorPrinter.write(result.getErrorMessage());
         }
     }
@@ -159,6 +161,15 @@ class FitNesseResultFormatter implements Formatter, Reporter {
         outputPrinter.write(text);
     }
 
+    public void missing(final List<String> snippets) {
+        if (!snippets.isEmpty()) {
+            write("<h3>Pending methods</h3>");
+            for (String snippet : snippets) {
+                write(format("<pre>%s</pre>", escapeHTML(snippet)));
+            }
+        }
+    }
+
     private void processStep(Step step, ExecutionResult result) {
         testSummary.add(result);
         write(format("<span class='%s'>%s%s</span><br/>", result.name().toLowerCase(), escapeHTML(step.getKeyword()), escapeHTML(step.getName())));
@@ -168,5 +179,4 @@ class FitNesseResultFormatter implements Formatter, Reporter {
         testSummary.add(ExecutionResult.ERROR);
         write(format("<span class='error'>Undefined step: %s%s</span><br/>", escapeHTML(step.getKeyword()), escapeHTML(step.getName())));
     }
-
 }

@@ -22,6 +22,7 @@ import static java.lang.String.format;
  */
 public class CucumberTestSystem implements TestSystem {
 
+    public static final String TEST_SYSTEM_NAME = "cucumber";
     private final String name;
     private final ExecutionLogListener executionLogListener;
     private final ClassLoader classLoader;
@@ -104,7 +105,7 @@ public class CucumberTestSystem implements TestSystem {
                 cucumberFeature.run(formatter, formatter, runtime);
             }
 
-            System.out.println(runtime.getSnippets());
+            formatter.missing(runtime.getSnippets());
         } catch (CucumberException e) {
             testSummary.add(ExecutionResult.ERROR);
             testSystemListener.testOutputChunk("<span class='error'>Test execution failed: " + (e.getCause() != null ? e.getCause().getMessage() : e.getMessage()) + "</span>");

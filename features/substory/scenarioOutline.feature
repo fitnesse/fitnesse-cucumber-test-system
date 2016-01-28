@@ -1,6 +1,4 @@
 Feature: A fancy scenario outline
-!define TEST_SYSTEM {cucumber}
-!define cucumber.glue {org.fitnesse.cucumber}
 
   Scenario Outline: squared numbers (last one fails)
 

@@ -16,7 +16,7 @@ public class Plugin extends PluginFeatureFactoryBase {
 
     @Override
     public void registerTestSystemFactories(TestSystemFactoryRegistry testSystemFactoryRegistry) {
-        testSystemFactoryRegistry.registerTestSystemFactory("cucumber", new CucumberTestSystemFactory());
+        testSystemFactoryRegistry.registerTestSystemFactory(CucumberTestSystem.TEST_SYSTEM_NAME, new CucumberTestSystemFactory());
         LOG.info("Registered Cucumber test system");
     }
 }

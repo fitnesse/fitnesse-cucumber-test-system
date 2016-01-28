@@ -6,9 +6,8 @@ import java.util.Collection;
 import java.util.List;
 import org.apache.commons.lang.NotImplementedException;
 
+import fitnesse.testrunner.WikiPageIdentity;
 import fitnesse.wiki.*;
-import fitnesse.wikitext.parser.ParsingPage;
-import fitnesse.wikitext.parser.Symbol;
 import gherkin.parser.ParseError;
 import util.FileUtil;
 
@@ -19,8 +18,6 @@ public class CucumberFeaturePage implements WikiPage {
     private final String name;
     private final WikiPage parent;
     private String content;
-    private ParsingPage parsingPage;
-    private Symbol syntaxTree;
 
     public CucumberFeaturePage(File path, String name, WikiPage parent) {
         this.name = name;
@@ -129,8 +126,8 @@ public class CucumberFeaturePage implements WikiPage {
 
     @Override
     public String getVariable(String name) {
-        if ("TEST_SYSTEM".equals(name)) {
-            return "cucumber";
+        if (WikiPageIdentity.TEST_SYSTEM.equals(name)) {
+            return CucumberTestSystem.TEST_SYSTEM_NAME;
         }
         return null;
     }

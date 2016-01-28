@@ -1,13 +1,9 @@
 package org.fitnesse.cucumber;
 
-import java.util.ArrayDeque;
 import java.util.List;
-import java.util.Queue;
 
-import fitnesse.testsystems.ExecutionResult;
-import fitnesse.testsystems.TestSummary;
+import fitnesse.util.StringUtils;
 import gherkin.formatter.Formatter;
-import gherkin.formatter.Reporter;
 import gherkin.formatter.model.*;
 
 import static fitnesse.html.HtmlUtil.escapeHTML;
@@ -95,7 +91,7 @@ class FitNessePageFormatter implements Formatter {
 
     private void write(String tag, DescribedStatement statement) {
         write("<" + tag + ">" + statement.getKeyword()+ ": " + escapeHTML(statement.getName()) + "</" + tag + ">");
-        if (statement.getDescription() != null) {
+        if (!StringUtils.isBlank(statement.getDescription())) {
             write("<p style='white-space: pre-line'>" + escapeHTML(statement.getDescription()) + "</p>");
         }
     }

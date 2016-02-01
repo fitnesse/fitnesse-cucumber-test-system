@@ -6,11 +6,11 @@
   <artifactId>${ivy.pom.artifactId}</artifactId>
   <packaging>${ivy.pom.packaging}</packaging>
   <version>${ivy.pom.version}</version>
-  <name>FitNesse JBehave integration</name>
+  <name>FitNesse Cucumber integration</name>
   <url>${ivy.pom.url}</url>
 
   <description>
-    JBehave support for FitNesse, the fully integrated standalone wiki, and acceptance testing framework.
+    Cucumber support for FitNesse, the fully integrated standalone wiki, and acceptance testing framework.
   </description>
 
   <licenses>
@@ -22,9 +22,9 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git://github.com/amolenaar/fitnesse-jbehave-test-system.git</connection>
-    <developerConnection>scm:git:git@github.com:amolenaar/fitnesse-jbehave-test-system.git</developerConnection>
-    <url>scm:git:http://github.com/amolenaar/fitnesse-jbehave-test-system</url>
+    <connection>scm:git:git://github.com/amolenaar/fitnesse-cucumber-test-system.git</connection>
+    <developerConnection>scm:git:git@github.com:amolenaar/fitnesse-cucumber-test-system.git</developerConnection>
+    <url>scm:git:http://github.com/amolenaar/fitnesse-cucumber-test-system</url>
   </scm>
 
   <developers>

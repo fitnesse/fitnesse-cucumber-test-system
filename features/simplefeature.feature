@@ -1,4 +1,4 @@
-Feature: Example symlinked scenarios for test system ${TEST_SYSTEM}
+Feature: Example symlinked scenarios
 
   Scenario: 2 squared
 

@@ -5,17 +5,17 @@
 		<license name="Common Public License version 1.0"
 			url="http://www.opensource.org/licenses/cpl1.0" />
 		<description homepage="http://github.com/amolenaar/fitnesse-cucumber-test-system">
-			A test executor for JBehave test scripts.
+			Cucumber support for FitNesse.
 		</description>
 	</info>
 
-    <configurations>
+	<configurations>
 		<conf name="default" visibility="public" />
 		<conf name="standalone" visibility="public" description="include in fitnesse-cucumber-standalone build" />
 		<conf name="test" visibility="public" extends="default" />
 	</configurations>
 
-    <publications xmlns:e="urn:ant.apache.org:ivy-extras">
+	<publications xmlns:e="urn:ant.apache.org:ivy-extras">
 		<artifact name="fitnesse-cucumber" type="jar" ext="jar" />
 		<artifact name="fitnesse-cucumber" type="pom" ext="pom" />
 		<artifact name="fitnesse-cucumber" type="source" ext="jar" e:classifier="sources" />

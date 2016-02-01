@@ -1,6 +1,6 @@
 <ivysettings>
-	<property name="sonatype.nexus.staging.url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
-	<property name="sonatype.nexus.snapshots.url" value="https://oss.sonatype.org/content/repositories/snapshots/" />
+	<property name="sonatype.nexus.staging.url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2" />
+	<property name="sonatype.nexus.snapshots.url" value="https://oss.sonatype.org/content/repositories/snapshots" />
 
 	<include file="ivysettings.xml" />
 

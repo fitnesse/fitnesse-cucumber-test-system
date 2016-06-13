@@ -73,6 +73,7 @@ public class CucumberFeaturePage implements WikiPage {
     private WikiPageProperties wikiPageProperties() {
         WikiPageProperties properties = new WikiPageProperties();
         properties.set(PageType.TEST.toString());
+        properties.set(PageData.PropertyEDIT);
         return properties;
     }
 

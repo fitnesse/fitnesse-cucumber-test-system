@@ -1,4 +1,4 @@
-Example scenarios for test system ${TEST_SYSTEM}
+Feature: Example scenarios for test system ${TEST_SYSTEM}
 
 Scenario: 2 squared
 

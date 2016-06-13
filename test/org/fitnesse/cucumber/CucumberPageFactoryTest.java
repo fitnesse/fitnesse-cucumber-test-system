@@ -12,6 +12,7 @@ import java.io.File;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
 public class CucumberPageFactoryTest {
@@ -52,7 +53,15 @@ public class CucumberPageFactoryTest {
     public void canResolveVariablesDefinedInAParentPage() {
         WikiPage features = root.getChildPage("FeatureFiles");
         WikiPage simpleStory = features.getChildPage("SimpleFeature");
-        assertThat(features.getVariable("TEST_SYSTEM"), is("cucumber"));
+        assertThat(features.getVariable("TEST_VAR"), is("my value"));
+        assertThat(simpleStory.getVariable("TEST_VAR"), is("my value"));
+    }
+
+    @Test
+    public void testPageWillAlwaysResolveTestSystemToCucumber() {
+        WikiPage features = root.getChildPage("FeatureFiles");
+        WikiPage simpleStory = features.getChildPage("SimpleFeature");
+        assertNull("TEST_SYSTEM should not be defined", features.getVariable("TEST_SYSTEM"));
         assertThat(simpleStory.getVariable("TEST_SYSTEM"), is("cucumber"));
     }
 

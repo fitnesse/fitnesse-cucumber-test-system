@@ -1,5 +1,10 @@
+!contents
+
 !include -c .CucumberClassPath
 
 !**> Please note that the teststeps classes directory is not in FitNesse's own classpath:
 ${java.class.path}
 *!
+
+For unit testing:
+!define TEST_VAR {my value}

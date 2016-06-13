@@ -130,7 +130,7 @@ public class CucumberFeaturePage implements WikiPage {
         if (WikiPageIdentity.TEST_SYSTEM.equals(name)) {
             return CucumberTestSystem.TEST_SYSTEM_NAME;
         }
-        return null;
+        return isRoot() ? null : parent.getVariable(name);
     }
 
     public File getFileSystemPath() {

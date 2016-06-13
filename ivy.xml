@@ -24,8 +24,8 @@
 	</publications>
  
 	<dependencies>
-		<dependency org="org.fitnesse" name="fitnesse" rev="20160128-SNAPSHOT" conf="default" />
-		<dependency org="info.cukes" name="cucumber-java" rev="1.2.2" conf="*->default" />
+		<dependency org="org.fitnesse" name="fitnesse" rev="20160515" conf="default" />
+		<dependency org="info.cukes" name="cucumber-java" rev="1.2.4" conf="*->default" />
 
 		<!-- scope: test -->
 		<dependency org="org.mockito" name="mockito-core" rev="1.9.5" conf="test->default" />

@@ -25,7 +25,7 @@ Features
 Using the plugin
 ----------------
 
-You'll need FitNesse version [20150814] or newer.
+You'll need FitNesse version [20160515] or newer.
 
 Binaries (jar files) are available from the [Maven Central] repository.
 

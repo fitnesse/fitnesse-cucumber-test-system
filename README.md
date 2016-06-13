@@ -16,7 +16,10 @@ Features
 
  - Execute Cucumber BDD tests via FitNesse.
  - Easily manage your BDD test cases in FitNesse.
- - The Cucumber test system uses a special wiki symbol (`!steps`) that can be used to define step classes.
+ - Define a simple property to tell where your step definitions live:
+
+    !define cucumber.glue {org.fitnesse.cucumber}
+
  - Story files can be accessed directly from within FitNesse. This way you can make use of the reporting facilities of FitNesse.
 
 Using the plugin

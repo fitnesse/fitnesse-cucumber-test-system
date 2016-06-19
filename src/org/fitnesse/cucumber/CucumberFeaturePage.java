@@ -56,6 +56,11 @@ public class CucumberFeaturePage implements WikiPage {
     }
 
     @Override
+    public void remove() {
+        // no-op
+    }
+
+    @Override
     public List<WikiPage> getChildren() {
         return emptyList();
     }

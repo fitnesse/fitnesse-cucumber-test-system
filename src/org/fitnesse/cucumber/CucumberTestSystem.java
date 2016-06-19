@@ -14,6 +14,7 @@ import fitnesse.testrunner.WikiTestPage;
 import fitnesse.testsystems.*;
 import fitnesse.wiki.WikiPage;
 import fitnesse.wiki.fs.FileSystemPage;
+import util.FileUtil;
 
 import static java.lang.String.format;
 
@@ -45,7 +46,7 @@ public class CucumberTestSystem implements TestSystem {
     }
 
     @Override
-    public void start() throws IOException {
+    public void start() {
 
         started = true;
 
@@ -53,21 +54,21 @@ public class CucumberTestSystem implements TestSystem {
     }
 
     @Override
-    public void bye() throws IOException, InterruptedException {
+    public void bye() {
         kill();
     }
 
     @Override
-    public void kill() throws IOException {
+    public void kill() {
         testSystemListener.testSystemStopped(this, null);
 
         if (classLoader instanceof Closeable) {
-            ((Closeable) classLoader).close();
+            FileUtil.close((Closeable) classLoader);
         }
     }
 
     @Override
-    public void runTests(TestPage testPage) throws IOException, InterruptedException {
+    public void runTests(TestPage testPage) {
         final ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         String gluePath = testPage.getVariable("cucumber.glue");
         final TestSummary testSummary = new TestSummary();
@@ -136,11 +137,7 @@ public class CucumberTestSystem implements TestSystem {
     }
 
     private void testOutputChunk(final String text) {
-        try {
-            testSystemListener.testOutputChunk(text);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to write output", e);
-        }
+        testSystemListener.testOutputChunk(text);
     }
 
     private static class PageResource implements Resource {

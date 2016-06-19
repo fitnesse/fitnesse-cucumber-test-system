@@ -24,7 +24,7 @@
 	</publications>
  
 	<dependencies>
-		<dependency org="org.fitnesse" name="fitnesse" rev="20160515" conf="default" />
+		<dependency org="org.fitnesse" name="fitnesse" rev="20160618" conf="default" />
 		<dependency org="info.cukes" name="cucumber-java" rev="1.2.4" conf="*->default" />
 
 		<!-- scope: test -->
